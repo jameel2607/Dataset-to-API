@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        h2, h3 {
+            color: #333;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input, button {
+            font-size: 16px;
+        }
+        pre {
+            background: #eee;
+            padding: 10px;
+            text-align: left;
+            overflow: auto;
+            max-height: 200px;
+            border-radius: 5px;
+        }
+        .output-box {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            text-align: left;
+            max-height: 200px;
+            overflow: auto;
+        }
+    </style>
+    <script>
+        function uploadFile() {
+            let fileInput = document.getElementById("fileInput").files[0];
+            if (!fileInput) {
+                alert("Please select a file to upload.");
+                return;
+            }
+
+            let formData = new FormData();
+            formData.append("file", fileInput);
+
+            fetch('/upload/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message || "Upload successful!");
+                document.getElementById("columnsOutput").innerText = "";
+                document.getElementById("datasetOutput").innerText = "";
+                document.getElementById("columnOutput").innerText = "";
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function getColumns() {
+            fetch('/columns/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById("columnsOutput").innerText = "Columns: " + data.columns.join(", ");
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function viewDataset() {
+            fetch('/data/')
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById("datasetOutput").innerText = JSON.stringify(data, null, 2);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+
+        function getColumnData() {
+            let columnName = document.getElementById("columnName").value.trim();
+            if (!columnName) {
+                alert("Please enter a column name.");
+                return;
+            }
+
+            fetch(`/column/${columnName}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById("columnOutput").innerText = JSON.stringify(data, null, 2);
+                }
+            })
+            .catch(error => console.error("Error:", error));
+        }
+    </script>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Upload Dataset</h2>
+        <input type="file" id="fileInput">
+        <button onclick="uploadFile()">Upload</button>
+
+        <h3>Available Columns</h3>
+        <button onclick="getColumns()">Get Columns</button>
+        <p id="columnsOutput" class="output-box"></p>
+
+        <h3>View Dataset</h3>
+        <button onclick="viewDataset()">View Dataset</button>
+        <pre id="datasetOutput"></pre>
+
+        <h3>Get Data from Column</h3>
+        <input type="text" id="columnName" placeholder="Enter column name">
+        <button onclick="getColumnData()">Get Data</button>
+        <pre id="columnOutput"></pre>
+    </div>
+
+</body>
+</html>
